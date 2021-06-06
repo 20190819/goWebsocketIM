@@ -29,16 +29,18 @@ func (_this *WebSocketController) Join() {
 	_this.redirect302(uname)
 
 	ws, err := websocket.Upgrade(_this.Ctx.ResponseWriter, _this.Ctx.Request, nil, 1024, 1024)
-	if err != nil {
-		if _, ok := err.(websocket.HandshakeError); ok {
-			http.Error(_this.Ctx.ResponseWriter, "Not a websocket handshake", 400)
-		}
-	} else {
+	if _, ok := err.(websocket.HandshakeError); ok {
+		http.Error(_this.Ctx.ResponseWriter, "Not a websocket handshake", 400)
+		return
+	} else if err != nil {
 		beego.Error("Cannot setup WebSocket connection:", err)
+		return
 	}
 
 	Join(uname, ws)
+
 	defer Leave(uname)
+
 	for {
 		_, p, err := ws.ReadMessage()
 		if err != nil {
@@ -56,11 +58,13 @@ func broadcastWebSocket(event models.Event) {
 	}
 
 	// 订阅者循环
-	for sub := subscribers.Front(); sub != nil; sub.Next() {
+	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 		ws := sub.Value.(Subscriber).Conn
+		// 连接成功
 		if ws != nil {
+			sendErr := ws.WriteMessage(websocket.TextMessage, data)
 			// 发送消息失败
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
+			if sendErr != nil {
 				chanUnsubscribe <- sub.Value.(Subscriber).Name
 			}
 		}

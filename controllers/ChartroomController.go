@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"container/list"
+	"fmt"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -32,7 +33,8 @@ func newEvent(ep models.EventType, username, msg string) models.Event {
 }
 
 func Join(username string, ws *websocket.Conn) {
-	chanSubscribe <- Subscriber{username, ws}
+	fmt.Println("chatroom join")
+	chanSubscribe <- Subscriber{Name: username, Conn: ws}
 }
 
 func Leave(username string) {
@@ -86,7 +88,7 @@ func init() {
 
 // 判断用户是否存在
 func userExist(subscribers *list.List, user string) bool {
-	for sub := subscribers.Front(); sub != nil; sub.Next() {
+	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 		if sub.Value.(Subscriber).Name == user {
 			return true
 		}
