@@ -14,6 +14,7 @@ var (
 	chanUnsubscribe = make(chan string, 10)
 	chanPublish     = make(chan models.Event, 10)
 	subscribers     = list.New()
+	waitinglist     = list.New()
 )
 
 type Subscription struct {
@@ -41,8 +42,8 @@ func Leave(username string) {
 func chatroom() {
 	for {
 		select {
-		// 订阅
 		case sub := <-chanSubscribe:
+			// 订阅
 			if !userExist(subscribers, sub.Name) {
 				subscribers.PushBack(sub)
 				chanPublish <- newEvent(models.EVENT_JOIN, sub.Name, "")
@@ -50,7 +51,19 @@ func chatroom() {
 			} else {
 				beego.Info("old user:", sub.Name, ";websocket conn:", sub.Conn != nil)
 			}
+		case event := <-chanPublish:
+			// 广播消息
+			for ch := waitinglist.Back(); ch != nil; ch.Prev() {
+				ch.Value.(chan bool) <- true
+				waitinglist.Remove(ch)
+			}
+			broadcastWebSocket(event)
+			models.NewArchive(event)
+			if event.Type == models.EVENT_MESSAGE {
+				beego.Info("message from : ", event.User, "message: ", event.Content)
+			}
 		case unsub := <-chanUnsubscribe:
+			// 取消订阅
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 				if sub.Value.(Subscriber).Name == unsub {
 					subscribers.Remove(sub)
@@ -65,6 +78,10 @@ func chatroom() {
 			}
 		}
 	}
+}
+
+func init() {
+	go chatroom()
 }
 
 // 判断用户是否存在
