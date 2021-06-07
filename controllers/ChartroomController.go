@@ -32,12 +32,12 @@ func newEvent(ep models.EventType, username, msg string) models.Event {
 	return models.Event{ep, username, int(time.Now().Unix()), msg}
 }
 
-func Join(username string, ws *websocket.Conn) {
+func JoinRoom(username string, ws *websocket.Conn) {
 	fmt.Println("chatroom join")
 	chanSubscribe <- Subscriber{Name: username, Conn: ws}
 }
 
-func Leave(username string) {
+func LeaveRoom(username string) {
 	chanUnsubscribe <- username
 }
 
@@ -82,6 +82,7 @@ func chatroom() {
 	}
 }
 
+// goruntine 异步
 func init() {
 	go chatroom()
 }

@@ -1,18 +1,13 @@
 package controllers
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/astaxie/beego"
 )
 
 type AppController struct {
 	baseControler
-}
-
-func (_this *AppController) Get() {
-	_this.TplName = "welcome.html"
-	fmt.Println("welcome")
 }
 
 type joinResult struct {
@@ -27,18 +22,25 @@ type joinResult struct {
 func (_this *AppController) Join() {
 	_this.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 
-	uname := _this.GetString("uname")
-	tech := _this.GetString("tech")
-
-	beego.Info(uname, tech)
-
+	// 匿名结构体
+	var data struct {
+		Uname string
+		Tech  string
+	}
+	// 接收 json
+	jsonStr := _this.Ctx.Input.RequestBody
+	// 解析
+	err := json.Unmarshal(jsonStr, &data)
+	if err != nil {
+		beego.Error("json 解析错误")
+	}
 	_this.Data["json"] = joinResult{
 		Code: 0,
 		Msg:  "success",
 		Data: struct {
 			Uname string
 			Tech  string
-		}{uname, tech},
+		}{data.Uname, data.Tech},
 	}
 	_this.ServeJSON()
 }

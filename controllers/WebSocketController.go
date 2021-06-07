@@ -13,19 +13,9 @@ type WebSocketController struct {
 	baseControler
 }
 
-func (_this *WebSocketController) Get() {
-	uname := _this.GetString("uname")
-
-	_this.redirect302(uname)
-
-	_this.TplName = "websocket.html"
-	_this.Data["IsWebSocket"] = true
-	_this.Data["UserName"] = uname
-}
-
 func (_this *WebSocketController) Join() {
+	_this.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	uname := _this.GetString("uname")
-
 	_this.redirect302(uname)
 
 	ws, err := websocket.Upgrade(_this.Ctx.ResponseWriter, _this.Ctx.Request, nil, 1024, 1024)
@@ -37,9 +27,9 @@ func (_this *WebSocketController) Join() {
 		return
 	}
 
-	Join(uname, ws)
+	JoinRoom(uname, ws)
 
-	defer Leave(uname)
+	defer LeaveRoom(uname)
 
 	for {
 		_, p, err := ws.ReadMessage()
@@ -68,7 +58,6 @@ func broadcastWebSocket(event models.Event) {
 				chanUnsubscribe <- sub.Value.(Subscriber).Name
 			}
 		}
-
 	}
 }
 
