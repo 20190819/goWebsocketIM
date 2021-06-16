@@ -10,7 +10,7 @@ import (
 )
 
 type WebSocketController struct {
-	baseControler
+	beego.Controller
 }
 
 func (_this *WebSocketController) Join() {

@@ -82,7 +82,7 @@ func chatroom() {
 	}
 }
 
-// goruntine 异步
+// goroutine 异步
 func init() {
 	go chatroom()
 }

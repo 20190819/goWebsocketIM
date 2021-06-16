@@ -10,11 +10,9 @@ func init() {
 
 	// 允许跨域
 	middlewares.EnableCors()
-
-	beego.Router("/", &controllers.AppController{})
-	beego.Router("/join", &controllers.AppController{}, "post:Join")
+	beego.Router("/login", &controllers.AppController{}, "post:Login")	// 登录
+	beego.Router("/logout", &controllers.AppController{}, "post:Logout")	// 退出
 
 	// websocket
-	beego.Router("/ws", &controllers.WebSocketController{})
-	beego.Router("/ws/join", &controllers.WebSocketController{}, "get:Join")
+	beego.Router("/ws/join", &controllers.WebSocketController{}, "get:Join")	// 进入聊天室
 }
